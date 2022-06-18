@@ -1,5 +1,4 @@
 # LikeCar
-프로젝트 설명
 
 프로젝트 주제 : 렌터카 홈페이지 & 관련 ERP 페이지
 개발 언어 : Java, Javascript
