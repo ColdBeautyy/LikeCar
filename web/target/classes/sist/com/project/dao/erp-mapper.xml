@@ -1,0 +1,390 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="sist.com.project.erp">
+
+<select id="getInventoryAllList" resultType="sist.com.project.bean.InventoryBean">
+	SELECT INV_NO,C.CAR_NO CAR_NO,C.OPT_NO OPT_NO,RES_COUNT,RELEASE,RELEASE_DATE,
+	RETURN_DATE,RENTAL_FEE,DISTANCE_FEE,CAR_NAME,CAR_TYPE,CAR_SIZE,CAR_ENERGY,
+	PURCHASE_FROM,PURCHASE_COST,TO_CHAR(PURCHASE_DATE,'YYYY/MM/DD')PURCHASE_DATE,BOARDABLE_COUNT
+	FROM LIKECAR_CAR C JOIN LIKECAR_INVENTORY I ON C.CAR_NO=I.CAR_NO
+</select>
+
+<select id="getInventoryList" parameterType="java.util.HashMap" resultType="sist.com.project.bean.InventoryBean">
+	SELECT INV_NO,C.CAR_NO CAR_NO,C.OPT_NO OPT_NO,RES_COUNT,RELEASE,RELEASE_DATE,
+	RETURN_DATE,RENTAL_FEE,DISTANCE_FEE,CAR_NAME,CAR_TYPE,CAR_SIZE,CAR_ENERGY,
+	PURCHASE_FROM,PURCHASE_COST,TO_CHAR(PURCHASE_DATE,'YYYY/MM/DD')PURCHASE_DATE,BOARDABLE_COUNT
+	FROM LIKECAR_CAR C JOIN LIKECAR_INVENTORY I ON C.CAR_NO=I.CAR_NO
+	<choose>
+		<when test="keyword eq null or keyword eq ''"></when>
+		<otherwise>
+		<where>
+			<if test='attr neq null and !attr.equals("all")'>
+				${attr} LIKE '%'||#{keyword}||'%'			
+			</if>
+			<if test='car_type neq null and !car_type.equals("all")'>
+ 				AND C.CAR_TYPE=#{car_type}
+			</if>
+			<if test='car_size neq null and !car_size.equals("all")'>
+				AND C.CAR_SIZE=#{car_size}
+			</if>
+			<if test='car_energy neq null and !car_energy.equals("all")'>
+				AND C.CAR_ENERGY=#{car_energy}
+			</if>
+			<if test='release neq null and !release.equals("all")'>
+				AND I.RELEASE=#{release}
+			</if>
+		</where>			
+		</otherwise>
+	</choose>
+</select>
+
+<update id="updateInventoryList" parameterType="java.util.HashMap">
+	UPDATE LIKECAR_CAR SET CAR_NO=#{car_no}
+	<if test="car_name neq ''">
+	,CAR_NAME=#{car_name}
+	</if>
+	<if test="car_type neq ''">
+	,CAR_TYPE=#{car_type}
+	</if>
+	<if test="car_size neq ''">
+	,CAR_SIZE=#{car_size}
+	</if>
+	<if test="car_energy neq ''">
+	,CAR_ENERGY=#{car_energy}
+	</if>
+	<if test="purchase_from neq ''">
+	,PURCHASE_FROM=#{purchase_from}
+	</if>
+	<if test="purchase_date neq ''">
+	,PURCHASE_DATE=#{purchase_date}
+	</if>
+	<if test="purchase_cost neq ''">
+	,PURCHASE_COST=#{purchase_cost}
+	</if>
+	WHERE CAR_NO=#{car_no}
+</update>
+
+<delete id="deleteInventoryList" parameterType="java.lang.Integer">
+	DELETE FROM LIKECAR_CAR WHERE CAR_NO=#{no}
+</delete>
+
+<select id="getOperationList" parameterType="java.util.HashMap" resultType="sist.com.project.bean.OperationBean">
+	SELECT A.STANDARD_DATE STANDARD_DATE,A.CAR_NAME CAR_NAME,NVL(COUNT,0)COUNT,ALLCOUNT,ROUND(NVL(COUNT,0)/ALLCOUNT*100,3)RATE
+	FROM (
+	SELECT DISTINCT STANDARD_DATE,CAR_NAME,COUNT(CAR_NAME) OVER(PARTITION BY CAR_NAME,STANDARD_DATE
+	ORDER BY STANDARD_DATE)COUNT
+	FROM (SELECT CAR_NAME,RELEASE_DATE,RETURN_DATE,
+	CASE
+	<choose>
+		<when test="date_standard eq 'day'">
+			<foreach item="n" index="index" collection="date_collection"> 
+				WHEN #{n} BETWEEN RELEASE_DATE AND RETURN_DATE THEN #{n}
+  			</foreach>
+    	</when>
+		<when test="date_standard eq 'month'">
+    		<foreach item="n" index="index" collection="date_collection"> 
+				<![CDATA[WHEN RELEASE_DATE<LAST_DAY(TO_DATE(#{n},'YYYY/MM')) AND RETURN_DATE>TO_DATE(TO_CHAR(#{n})||'/01','YYYY/MM/DD') THEN #{n}]]>
+  			</foreach>
+    	</when>
+		<when test="date_standard eq 'year'">
+			<foreach item="n" index="index" collection="date_collection"> 
+				<![CDATA[WHEN RELEASE_DATE<TO_DATE(TO_CHAR(#{n})||'/12/31','YYYY/MM/DD') AND RETURN_DATE>TO_DATE(TO_CHAR(#{n})||'/1/1','YYYY/MM/DD') THEN #{n}]]>
+  			</foreach>
+    	</when>
+    </choose>
+    	ELSE '1993/1/1'
+	END STANDARD_DATE
+	FROM LIKECAR_CAR C JOIN LIKECAR_INVENTORY I 
+	ON C.CAR_NO=I.CAR_NO
+	<if test="date_type eq 'select'">
+		<where>
+			<![CDATA[RELEASE_DATE<=TO_DATE(#{end_date},'YYYY/MM/DD')]]>
+			<![CDATA[AND RETURN_DATE>=TO_DATE(#{start_date},'YYYY/MM/DD')]]>
+		</where>
+	</if>
+	))S
+	FULL OUTER JOIN (
+	SELECT DISTINCT STANDARD_DATE,CAR_NAME,COUNT(CAR_NAME) OVER(PARTITION BY CAR_NAME
+	ORDER BY STANDARD_DATE)ALLCOUNT
+	FROM (SELECT CAR_NAME,RELEASE_DATE,RETURN_DATE,
+	CASE
+	<choose>
+		<when test="date_standard eq 'day'">
+			<foreach item="n" index="index" collection="date_collection"> 
+				WHEN TO_CHAR(PURCHASE_DATE,'YYYY/MM/DD') IN (#{n}) THEN #{n}
+  			</foreach>
+    	</when>
+		<when test="date_standard eq 'month'">
+    		<foreach item="n" index="index" collection="date_collection"> 
+				WHEN TO_CHAR(PURCHASE_DATE,'YYYY/MM') IN (#{n}) THEN #{n}
+  			</foreach>
+    	</when>
+		<when test="date_standard eq 'year'">
+			<foreach item="n" index="index" collection="date_collection"> 
+				WHEN TO_CHAR(PURCHASE_DATE,'YYYY') IN (#{n}) THEN #{n}
+  			</foreach>
+    	</when>
+    </choose>
+		ELSE '1993/12/31'
+	END STANDARD_DATE
+	FROM LIKECAR_CAR C JOIN LIKECAR_INVENTORY I 
+	ON C.CAR_NO=I.CAR_NO
+	<if test="date_type eq 'select'">
+		<where>
+			<![CDATA[RELEASE_DATE<=TO_DATE(#{end_date},'YYYY/MM/DD')]]>
+			<![CDATA[AND RETURN_DATE>=TO_DATE(#{start_date},'YYYY/MM/DD')]]>
+		</where>
+	</if>
+	))A
+	ON S.STANDARD_DATE=A.STANDARD_DATE AND S.CAR_NAME=A.CAR_NAME
+	<if test="select_model eq 'select'">
+	<where>
+		A.CAR_NAME=#{keyword}
+	</where>
+	</if>
+	ORDER BY STANDARD_DATE
+
+</select>
+
+<select id="getReservationAgeCount" parameterType="java.util.HashMap" resultType="sist.com.project.bean.ReservationErpBean">
+	SELECT DISTINCT STANDARD_DATE, COUNT(STANDARD_DATE) OVER(PARTITION BY STANDARD_DATE ORDER BY STANDARD_DATE)COUNT
+	FROM(
+	SELECT RES_NO,M.MEM_NO,MEM_BIRTH,
+	CASE
+    	<![CDATA[WHEN TO_CHAR(SYSDATE+1*365,'YYYY')-TO_CHAR(MEM_BIRTH,'YYYY')<30 THEN 'twenty' ]]>
+    	<![CDATA[WHEN TO_CHAR(SYSDATE+1*365,'YYYY')-TO_CHAR(MEM_BIRTH,'YYYY')>=30 AND TO_CHAR(SYSDATE+1*365,'YYYY')-TO_CHAR(MEM_BIRTH,'YYYY')<40 THEN 'thirty' ]]>
+    	<![CDATA[WHEN TO_CHAR(SYSDATE+1*365,'YYYY')-TO_CHAR(MEM_BIRTH,'YYYY')>=40 AND TO_CHAR(SYSDATE+1*365,'YYYY')-TO_CHAR(MEM_BIRTH,'YYYY')<50 THEN 'fourty' ]]>
+    	<![CDATA[WHEN TO_CHAR(SYSDATE+1*365,'YYYY')-TO_CHAR(MEM_BIRTH,'YYYY')>=50 AND TO_CHAR(SYSDATE+1*365,'YYYY')-TO_CHAR(MEM_BIRTH,'YYYY')<60 THEN 'fifty' ]]>
+    	ELSE 'sixty'
+	END AGE_STANDARD,
+		CASE
+	<choose>
+		<when test="date_standard eq 'day'">
+			<foreach item="n" index="index" collection="date_collection"> 
+				WHEN #{n} BETWEEN START_DATE AND END_DATE THEN #{n}
+  			</foreach>
+    	</when>
+		<when test="date_standard eq 'month'">
+    		<foreach item="n" index="index" collection="date_collection"> 
+				<![CDATA[WHEN START_DATE<LAST_DAY(TO_DATE(#{n},'YYYY.MM')) AND END_DATE>TO_DATE(TO_CHAR(#{n})||'.01','YYYY.MM.DD') THEN #{n}]]>
+  			</foreach>
+    	</when>
+		<when test="date_standard eq 'year'">
+			<foreach item="n" index="index" collection="date_collection"> 
+				<![CDATA[WHEN START_DATE<TO_DATE(TO_CHAR(#{n})||'.12.31','YYYY.MM.DD') AND END_DATE>TO_DATE(TO_CHAR(#{n})||'.1.1','YYYY.MM.DD') THEN #{n}]]>
+  			</foreach>
+    	</when>
+    </choose>
+    	ELSE '1993/1/1'
+	END STANDARD_DATE
+	FROM LIKECAR_RESERVATION R JOIN LIKECAR_MEMBER M ON R.MEM_NO=M.MEM_NO
+	<choose>
+	<when test="date_type eq 'select'">
+		<where>
+			<![CDATA[START_DATE<=TO_DATE(#{end_date},'YYYY/MM/DD')]]>
+			<![CDATA[AND END_DATE>=TO_DATE(#{start_date},'YYYY/MM/DD')]]>
+		</where>
+	)
+	WHERE AGE_STANDARD IN (#{select_age})
+	</when>
+	<otherwise>
+	)
+	</otherwise>
+	</choose>
+	
+</select>
+
+<select id="getFsReportData" parameterType="java.util.HashMap" resultType="sist.com.project.bean.FsBean">
+	SELECT ACC_NO,ACC_TYPE,ACC_NAME,ACC_VALUE,TO_CHAR(ACC_DATE,'YYYY/MM/DD')ACC_DATE,DEPREC_LIFE,RATE
+	FROM LIKECAR_ACCOUNT
+	<where>
+	<choose>
+		<when test="fs_type eq 'fs'">
+			ACC_TYPE IN ('자산','부채','자본')
+			<if test="fiscal_type eq 'year'"><![CDATA[AND TO_CHAR(ACC_DATE,'YYYY')<=#{year}]]></if>
+			<if test="fiscal_type eq 'month'"><![CDATA[AND TO_CHAR(ACC_DATE,'YYYY/MM')<=#{year}||'/'||#{month}]]></if>
+		</when>
+		<when test="fs_type eq 'is'">
+			ACC_TYPE IN ('수익','비용')
+			<if test="fiscal_type eq 'year'"><![CDATA[AND TO_CHAR(ACC_DATE,'YYYY')=#{year}]]></if>
+			<if test="fiscal_type eq 'month'"><![CDATA[AND TO_CHAR(ACC_DATE,'YYYY/MM')=#{year}||'/'||#{month}]]></if>
+		</when>
+	</choose>
+	</where>
+	ORDER BY ACC_DATE
+</select>
+
+<select id="getSummaryData" parameterType="java.lang.String" resultType="sist.com.project.bean.FsBean">
+	SELECT ACC_NO,ACC_TYPE,ACC_NAME,ACC_VALUE,ACC_DATE,DEPREC_LIFE,RATE
+	FROM LIKECAR_ACCOUNT
+	<where>
+		<![CDATA[TO_CHAR(ACC_DATE,'YYYY/MM/DD')=#{date}]]>
+	</where>
+	ORDER BY ACC_DATE
+</select>
+
+<select id="getMemberDataList" resultType="sist.com.project.bean.MemberErpBean">
+	SELECT MEM_NO,MEM_NAME,MEM_ID,MEM_PW,MEM_TEL,MEM_BIRTH,POINT,VIP_NO,LIC_NO
+	FROM LIKECAR_MEMBER
+</select>
+
+<select id="searchMemberDataList" parameterType="java.util.HashMap" resultType="sist.com.project.bean.MemberErpBean">
+	SELECT MEM_NO,MEM_NAME,MEM_ID,MEM_PW,MEM_TEL,MEM_BIRTH,POINT,VIP_NO,LIC_NO
+	FROM LIKECAR_MEMBER
+	WHERE ${attr} LIKE '%'||#{keyword}||'%'
+</select>
+
+<update id="updateMemberList" parameterType="java.util.HashMap">
+	UPDATE LIKECAR_MEMBER SET MEM_NO=#{mem_no}
+	<if test="mem_name neq ''">
+	,MEM_NAME=#{mem_name}
+	</if>
+	<if test="mem_id neq ''">
+	,MEM_ID=#{mem_id}
+	</if>
+	<if test="mem_pw neq ''">
+	,MEM_PW=#{mem_pw}
+	</if>
+	<if test="mem_tel neq ''">
+	,MEM_TEL=#{mem_tel}
+	</if>
+	<if test="point neq ''">
+	,POINT=#{point}
+	</if>
+	<if test="vip_no neq ''">
+	,VIP_NO=#{vip_no}
+	</if>
+	<if test="lic_no neq ''">
+	,LIC_NO=#{lic_no}
+	</if>
+	WHERE MEM_NO=#{mem_no}
+</update>
+
+<delete id="deleteMemberList" parameterType="java.lang.Integer">
+	DELETE FROM LIKECAR_MEMBER WHERE MEM_NO=#{no}
+</delete>
+
+<select id="getAdminDataList" resultType="sist.com.project.bean.AdminErpBean">
+	SELECT EMP_NO,EMP_NAME,EMP_ID,EMP_PW,DEPTNO,POSITION,TO_CHAR(HIREDATE,'YYYY/MM/DD')HIREDATE,EMP_COMTEL
+	FROM LIKECAR_ADMIN
+</select>
+
+<select id="searchAdminDataList" parameterType="java.util.HashMap" resultType="sist.com.project.bean.AdminErpBean">
+	SELECT EMP_NO,EMP_NAME,EMP_ID,EMP_PW,DEPTNO,POSITION,TO_CHAR(HIREDATE,'YYYY/MM/DD')HIREDATE,EMP_COMTEL
+	FROM LIKECAR_ADMIN
+	WHERE ${attr} LIKE '%'||#{keyword}||'%'
+</select>
+
+<update id="updateAdminList" parameterType="java.util.HashMap">
+	UPDATE LIKECAR_ADMIN SET EMP_NO=#{emp_no}
+	<if test="emp_name neq ''">
+	,EMP_NAME=#{emp_name}
+	</if>
+	<if test="emp_id neq ''">
+	,EMP_ID=#{emp_id}
+	</if>
+	<if test="emp_pw neq ''">
+	,EMP_PW=#{emp_pw}
+	</if>
+	<if test="deptno neq ''">
+	,DEPTNO=#{deptno}
+	</if>
+	<if test="position neq ''">
+	,POSITION=#{position}
+	</if>
+	<if test="hiredate neq ''">
+	,HIREDATE=#{hiredate}
+	</if>
+	<if test="emp_comtel neq ''">
+	,EMP_COMTEL=#{emp_comtel}
+	</if>
+	WHERE EMP_NO=#{emp_no}
+</update>
+
+<delete id="deleteAdminList" parameterType="java.lang.Integer">
+	DELETE FROM LIKECAR_ADMIN WHERE EMP_NO=#{no}
+</delete>
+
+<select id="getRevcomDataList" resultType="sist.com.project.bean.RevcomBean">
+	SELECT REVCOM_NO,REVCOM_NAME,REVCOM_CHARGE,A.EMP_NO EMP_NO,EMP_NAME,TO_CHAR(REVCOM_START,'YYYY/MM/DD')REVCOM_START,
+	TO_CHAR(REVCOM_END,'YYYY/MM/DD')REVCOM_END
+	FROM LIKECAR_REVCOM R JOIN LIKECAR_ADMIN A ON R.EMP_NO=A.EMP_NO
+</select>
+
+<select id="searchRevcomDataList" parameterType="java.util.HashMap" resultType="sist.com.project.bean.RevcomBean">
+	SELECT REVCOM_NO,REVCOM_NAME,REVCOM_CHARGE,A.EMP_NO EMP_NO,EMP_NAME,TO_CHAR(REVCOM_START,'YYYY/MM/DD')REVCOM_START,
+	TO_CHAR(REVCOM_END,'YYYY/MM/DD')REVCOM_END
+	FROM LIKECAR_REVCOM R JOIN LIKECAR_ADMIN A ON R.EMP_NO=A.EMP_NO
+	WHERE ${attr} LIKE '%'||#{keyword}||'%'
+</select>
+
+<update id="updateRevcomList" parameterType="java.util.HashMap">
+	UPDATE LIKECAR_REVCOM SET REVCOM_NO=#{revcom_no}
+	<if test="revcom_name neq ''">
+	,REVCOM_NAME=#{revcom_name}
+	</if>
+	<if test="revcom_charge neq ''">
+	,REVCOM_CHARGE=#{revcom_charge}
+	</if>
+	<if test="emp_no neq ''">
+	,EMP_NO=#{emp_no}
+	</if>
+	<if test="revcom_start neq ''">
+	,REVCOM_START=#{revcom_start}
+	</if>
+	<if test="revcom_end neq ''">
+	,REVCOM_END=#{revcom_end}
+	</if>
+	WHERE REVCOM_NO=#{revcom_no}
+</update>
+
+<delete id="deleteRevcomList" parameterType="java.lang.Integer">
+	DELETE FROM LIKECAR_REVCOM WHERE REVCOM_NO=#{no}
+</delete>
+
+<select id="getInscomDataList" resultType="sist.com.project.bean.InscomBean">
+	SELECT INSCOM_NO,INSCOM_NAME,INSCOM_CHARGE,A.EMP_NO EMP_NO,EMP_NAME,TO_CHAR(INSCOM_START,'YYYY/MM/DD')INSCOM_START,
+	TO_CHAR(INSCOM_END,'YYYY/MM/DD')INSCOM_END
+	FROM LIKECAR_INSCOM I JOIN LIKECAR_ADMIN A ON I.EMP_NO=A.EMP_NO
+</select>
+
+<select id="searchInscomDataList" parameterType="java.util.HashMap" resultType="sist.com.project.bean.InscomBean">
+	SELECT INSCOM_NO,INSCOM_NAME,INSCOM_CHARGE,A.EMP_NO EMP_NO,EMP_NAME,TO_CHAR(INSCOM_START,'YYYY/MM/DD')INSCOM_START,
+	TO_CHAR(INSCOM_END,'YYYY/MM/DD')INSCOM_END
+	FROM LIKECAR_INSCOM I JOIN LIKECAR_ADMIN A ON I.EMP_NO=A.EMP_NO
+	WHERE ${attr} LIKE '%'||#{keyword}||'%'
+</select>
+
+<update id="updateInscomList" parameterType="java.util.HashMap">
+	UPDATE LIKECAR_INSCOM SET INSCOM_NO=#{inscom_no}
+	<if test="inscom_name neq ''">
+	,INSCOM_NAME=#{inscom_name}
+	</if>
+	<if test="inscom_charge neq ''">
+	,INSCOM_CHARGE=#{inscom_charge}
+	</if>
+	<if test="emp_no neq ''">
+	,EMP_NO=#{emp_no}
+	</if>
+	<if test="inscom_start neq ''">
+	,INSCOM_START=#{inscom_start}
+	</if>
+	<if test="inscom_end neq ''">
+	,INSCOM_END=#{inscom_end}
+	</if>
+	WHERE INSCOM_NO=#{inscom_no}
+</update>
+
+<delete id="deleteInscomList" parameterType="java.lang.Integer">
+	DELETE FROM LIKECAR_INSCOM WHERE INSCOM_NO=#{no}
+</delete>
+		
+<select id="selectReserveCount" resultType="int">
+	select count(*) from likecarResult
+	where state = '입금확인중'
+</select>
+
+
+</mapper>

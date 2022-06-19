@@ -1,0 +1,108 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="sist.com.bean.boardSample">
+	
+<select id="checkId" parameterType="java.lang.String" resultType="java.lang.String">
+	SELECT ID FROM SPRINGMVCBOARDMEMBER
+	WHERE ID=#{id}
+</select>
+	
+<select id="checkIdPw" parameterType="java.lang.String" resultType="java.lang.String">
+	SELECT PW FROM SPRINGMVCBOARDMEMBER
+	WHERE ID=#{id}
+</select>
+
+<insert id="enrollAccount" parameterType="java.util.HashMap">
+	INSERT INTO SPRINGMVCBOARDMEMBER(ID,NAME,PW) VALUES(#{id},#{name},#{pw})
+</insert>
+
+<select id="searchAllBoardList" resultType="sist.com.bean.MvcBoardBean">
+	SELECT NO,ID,PW,TITLE,WRITER,CONTENTS,HIT,FILENAME,TO_CHAR(REGDATE,'YYYY/MM/DD')REGDATE
+	FROM MVCSPRINGBOARD
+</select>
+
+<insert id="insertNewBoard" parameterType="sist.com.bean.MvcBoardBean">
+	INSERT INTO MVCSPRINGBOARD(NO,ID,PW,TITLE,WRITER,CONTENTS,HIT,FILENAME,REGDATE)
+	VALUES(MVCSPRINGBOARD_SEQ.NEXTVAL,#{id},#{pw},#{title},#{writer},#{contents},0,
+	<choose>
+		<when test="fileName eq null or fileName eq ''">
+			'noimg.jpg'
+		</when>
+		<otherwise>
+			#{fileName}
+		</otherwise>
+	</choose>
+	,SYSDATE)
+</insert>
+
+<select id="selectBoardBean" parameterType="java.lang.Integer" resultType="sist.com.bean.MvcBoardBean">
+	SELECT * FROM MVCSPRINGBOARD WHERE NO=#{no}
+</select>
+
+<update id="updateBoardInfo" parameterType="sist.com.bean.MvcBoardBean">
+	UPDATE MVCSPRINGBOARD SET TITLE=#{title},CONTENTS=#{contents}
+		<choose>
+		<when test="fileName eq null or fileName eq ''"></when>
+		<otherwise>
+			,#{fileName}
+		</otherwise>
+	</choose>
+	WHERE NO=#{no}
+</update>
+
+<delete id="deleteBoard" parameterType="java.lang.Integer">
+	DELETE FROM MVCSPRINGBOARD WHERE NO=#{no}
+</delete>
+
+<select id="getScrapList" parameterType="java.lang.String" resultType="java.lang.String">
+	SELECT SCRAPBOARD FROM SPRINGMVCBOARDMEMBER WHERE ID=#{id}
+</select>
+
+<update id="addScrapBoard" parameterType="java.util.HashMap">
+	UPDATE SPRINGMVCBOARDMEMBER SET SCRAPBOARD=
+	<choose>
+		<when test="scrapList eq null or scrapList eq ''"></when>
+		<otherwise>
+			#{scrapList}||
+		</otherwise>
+	</choose>
+	#{no}||'#' WHERE ID=#{id}
+</update>
+
+<select id="selectScrapBoard" parameterType="java.lang.Integer" resultType="sist.com.bean.MvcBoardBean">
+	SELECT * FROM MVCSPRINGBOARD WHERE NO=#{no}
+</select>
+
+<update id="deleteScrapBoard" parameterType="java.lang.String">
+	UPDATE SPRINGMVCBOARDMEMBER SET SCRAPBOARD=#{list} WHERE ID=#{id}
+</update>
+
+<insert id="insertReply" parameterType="java.util.HashMap">
+	INSERT INTO MVCBOARDREPLY(REPLYNO,WRITER,CONTENTS,REGDATE,BOARDNO)
+	VALUES(MVCBOARDREPLY_SEQ.NEXTVAL,#{writer},#{contents},SYSDATE,#{no})
+</insert>
+
+<select id="selectReplies" parameterType="java.lang.Integer" resultType="sist.com.bean.MvcReplyBean">
+	SELECT REPLYNO,WRITER,CONTENTS,REGDATE,BOARDNO FROM MVCBOARDREPLY
+	WHERE BOARDNO=#{no}
+</select>
+
+<delete id="deleteReply" parameterType="java.lang.Integer">
+	DELETE FROM MVCBOARDREPLY WHERE REPLYNO=#{no}
+</delete>
+
+<update id="updateReply" parameterType="sist.com.bean.MvcReplyBean">
+	UPDATE MVCBOARDREPLY SET CONTENTS=#{contents} WHERE REPLYNO=#{replyno}
+</update>
+
+
+
+
+</mapper>
+
+
+
+
+

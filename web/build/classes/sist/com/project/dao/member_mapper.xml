@@ -1,0 +1,120 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="sist.com.kree.project.crud">
+
+<!-- 회원 로그인  -->
+<select id="memberCheck" parameterType="java.lang.String" resultType="java.lang.String">
+SELECT MEM_PW 
+FROM LIKECAR_MEMBER
+WHERE MEM_ID=#{mem_id}
+</select>
+
+<select id="selectMemberName" parameterType="java.lang.String" resultType="java.lang.String">
+SELECT MEM_NAME 
+FROM LIKECAR_MEMBER
+WHERE MEM_ID=#{mem_id}
+</select>
+
+<!-- 관리자 로그인  -->
+<select id="adminCheck" parameterType="java.lang.String" resultType="java.lang.String">
+SELECT EMP_PW 
+FROM LIKECAR_ADMIN
+WHERE EMP_ID=#{id}
+</select>
+
+<!-- 회원가입-아이디 중복 체크 -->
+<select id="idOverlapCheck" parameterType="java.lang.String" resultType="java.lang.String">
+SELECT MEM_ID
+FROM LIKECAR_MEMBER
+WHERE MEM_ID=#{id}
+</select>
+
+
+<!-- <select id="selectSearchDong" parameterType="java.lang.String" resultType="sist.com.kree.bean.ZipcodeBean">
+SELECT *
+FROM POSTCODE
+WHERE DONG LIKE '%'||#{dong}||'%'
+</select> -->
+
+<!-- <insert id="insertMemberSignUp" parameterType="java.util.HashMap">
+INSERT INTO LIKEMEMBER(MEM_NO,MEM_ID,MEM_PW,MEM_NAME,MEM_TEL,MEM_BIRTH,POINT)
+VALUES(LIKEMEMBER_SEQ.NEXTVAL,#{mem_id},#{mem_pw},#{mem_name},#{mem_tel},#{mem_birth},0)
+</insert> -->
+
+<!-- 회원가입-기본정보  -->
+<insert id="insertMemberSignUp" parameterType="java.util.HashMap">
+INSERT INTO LIKECAR_MEMBER(MEM_NO,MEM_ID,MEM_PW,MEM_NAME,MEM_TEL,MEM_BIRTH,LIC_NO,ADDRESS,POINT)
+VALUES(LIKECAR_MEMBER_SEQ.NEXTVAL,#{mem_id},#{mem_pw},#{mem_name},#{mem_tel},#{mem_birth},#{lic_no},#{address},1000)
+</insert>
+
+<!-- 회원가입-면허정보 -->
+<insert id="insertLicenceInfo">
+INSERT INTO CARLICEN(LIC_NO,ENROLL_DATE,EXPIRE_DATE,TYPE)
+VALUES(#{lic_no},#{enroll_date},#{expire_date},#{type})
+</insert>
+
+<!-- 
+<insert id="insertMemberLicence" parameterType="java.util.HashMap">
+INSERT INTO LIKEMEMBER(LIC_NO,ADDRESS)
+VALUES(#{lic_no},#{address})
+WHERE MEM_ID=#{mem_id}
+</insert>
+ -->
+ 
+ <!-- 회원가입-카드정보  -->
+<insert id="insertCardInfo" parameterType="java.util.HashMap">
+INSERT INTO CARDINFO(CARD_NUM,CARD_CP,CARD_CVC,CARD_PW,CARD_EXPIRE_DATE,MEM_ID)
+VALUES(#{card_num},#{card_cp},#{card_cvc},#{card_pw},#{card_expire_date},#{mem_id})
+</insert>
+
+<!-- 회원가입-회원가입 쿠폰지급  -->
+<insert id="insertSignUpCoupon" parameterType="java.util.HashMap">
+INSERT INTO MEMBERCOUPON(CPON_NO,CPON_NUM,MEM_ID)
+VALUES(2,1,#{mem_id})
+</insert>
+
+<!-- 마이페이지 -->
+<select id="mypageInfo" parameterType="java.lang.String" resultType="MyPageBean">
+SELECT LC.LIC_NO LIC_NO,LC.TYPE TYPE,MEM.POINT POINT,MEM.MEM_TEL MEM_TEL,NVL(MEM.COMPANY,' ')COMPANY,
+MEM.ADDRESS ADDRESS,MEM.MEM_PW,NVL2(MEM.VIP_NO,'VIP','일반') VIP_TYPE,NVL(CP.CPON_NUM,'0')CPON_NUM
+FROM 
+(SELECT LIC_NO,TYPE
+FROM CARLICEN
+WHERE LIC_NO=(SELECT LIC_NO
+FROM LIKECAR_MEMBER
+WHERE MEM_ID=#{id})) LC,
+(SELECT POINT,MEM_TEL,COMPANY,ADDRESS,MEM_PW,VIP_NO
+FROM LIKECAR_MEMBER
+WHERE MEM_ID=#{id}) MEM,
+(SELECT CPON_NUM
+FROM MEMBERCOUPON
+WHERE MEM_ID=#{id}) CP
+</select>
+
+<!-- 마이페이지-개인정보 수정 // 안됨 -->
+<update id="memAccountUpdate" parameterType="java.util.HashMap">
+UPDATE LIKECAR_MEMBER SET MEM_ID=#{mem_id},MEM_TEL=#{mem_tel},ADDRESS=#{address},LIC_NO=#{lic_no}
+WHERE MEM_ID=#{id}
+</update>
+
+<!-- 마이페이지-개인정보 수정 // 안됨 -->
+<update id="memLicenceUpdate" parameterType="java.util.HashMap">
+UPDATE CARLICEN SET TYPE=#{type},LIC_NO=#{lic_no}
+WHERE LIC_NO=(SELECT LIC_NO
+FROM LIKECAR_MEMBER
+WHERE MEM_ID=#{id})
+</update>
+
+<!-- 마이페이지-비밀번호변경 -->
+<update id="mempasswordUpdate" parameterType="java.util.HashMap">
+UPDATE LIKECAR_MEMBER SET MEM_PW=#{new_pw}
+WHERE MEM_ID=#{id}
+</update>
+
+</mapper>
+
+
+
+

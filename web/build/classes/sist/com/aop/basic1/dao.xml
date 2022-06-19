@@ -1,0 +1,44 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xmlns:aop="http://www.springframework.org/schema/aop"
+	xmlns:context="http://www.springframework.org/schema/context"
+	xmlns:tx="http://www.springframework.org/schema/tx"
+	xsi:schemaLocation="http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans.xsd
+		http://www.springframework.org/schema/aop http://www.springframework.org/schema/aop/spring-aop-4.3.xsd
+		http://www.springframework.org/schema/context http://www.springframework.org/schema/context/spring-context-4.3.xsd
+		http://www.springframework.org/schema/tx http://www.springframework.org/schema/tx/spring-tx-4.3.xsd">
+	
+	<bean id="mydao" class="sist.com.aop.basic1.JdbcDao" scope="singleton"></bean>
+	<bean id="beforeAdvice" class="sist.com.aop.basic1.BeforeAdvice"></bean>
+	<bean id="afterAdvice"  class="sist.com.aop.basic1.AfterAdvice"></bean>
+	<bean id="afterReturnAdvice"  class="sist.com.aop.basic1.AfterReturnAdvice"></bean>
+	<bean id="throwingAdvice"  class="sist.com.aop.basic1.ThrowingAdvice"></bean>
+	
+	<!-- () 인자가 없다 -->
+	<!-- (..) 인자가 있던없던 -->
+	<!-- (*) 인자 타입과 무관하게 하나는 반드시 존재 -->
+	<!-- (int,*)  -->
+	<!-- (String,..) -->
+	
+	<aop:config>
+		<aop:aspect id="aopBefore" ref="beforeAdvice">
+			<aop:before method="beforeCheck" pointcut="execution(* sist.com.aop.basic1.ParentDao*.*(..))"/>
+																								<!-- method(param) -->
+		</aop:aspect>
+		<aop:aspect id="aopAfter" ref="afterAdvice">
+			<aop:after  method="afterCheck"  pointcut="execution(* sist.com.aop.basic1.ParentDao*.*(..))"/>
+		</aop:aspect>
+		
+		
+		
+		<aop:aspect id="aopafterreturn" ref="afterReturnAdvice">
+			<aop:after-returning pointcut="execution(* sist.com.aop.basic1.ParentDao*.*(..))" method="afterProcess"/>
+		</aop:aspect>
+
+		<aop:aspect id="aopthrowing" ref="throwingAdvice">
+			<aop:after-throwing pointcut="execution(* sist.com.aop.basic1.ParentDao*.*(..))" method="exceptionProcess"/>
+		</aop:aspect>
+	</aop:config>
+	
+</beans>

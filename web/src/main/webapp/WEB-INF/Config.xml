@@ -1,0 +1,62 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE configuration
+PUBLIC "-//mybatis.org//DTD Config 3.0//EN"
+"http://mybatis.org/dtd/mybatis-3-config.dtd">
+<configuration><!-- DB설정(Connection) -->
+   <!-- 
+        <typeAliases>
+           VO의 별칭
+        </typeAliases>
+        
+        1) <properties>
+        2) <typeAliases>
+        3) <transactionManager>
+        4) <mappers>
+    -->
+    <typeAliases>
+		<typeAlias alias="reserve" type="sist.com.project.bean.Reserve_ReserveBean"/>
+  		<typeAlias alias="likemember" type="sist.com.project.bean.LikeCarMemberBean"/>
+ 		<typeAlias alias="likeCarlist" type="sist.com.project.bean.Reserve_CarListBean"/>
+ 		<typeAlias alias="result" type="sist.com.project.bean.LikecarPaymentBean"/>
+  		<typeAlias alias="zipBean" type="sist.com.project.bean.ZipcodeBean"/>
+  		<typeAlias type="sist.com.project.bean.MemberBean" alias="memBean"/>
+      	<typeAlias type="sist.com.project.bean.ZipcodeBean" alias="zipBean"/>
+      	<typeAlias type="sist.com.project.bean.VipMemberBean" alias="vipBean"/>
+      	<typeAlias type="sist.com.project.bean.LicenceBean" alias="licenceBean"/>
+      	<typeAlias type="sist.com.project.bean.CardBean" alias="CardBean"/>
+      	<typeAlias type="sist.com.project.bean.MyPageBean" alias="MyPageBean"/>
+  		
+    </typeAliases>
+
+    <!-- DB연동 -->
+    <!-- <environments default="development"> 					 DB 설정하는 애
+      <environment id="development">
+        <transactionManager type="JDBC"/>
+        
+        <dataSource type="POOLED">
+        
+         <property name="driver" 
+            value="oracle.jdbc.driver.OracleDriver"/>
+         <property name="url" 
+            value="jdbc:oracle:thin:@localhost:1521:orcl"/> 오라클 서버와 연결하는 key값
+         <property name="username" value="TAE"/>
+         <property name="password" value="TAE"/>
+ 		 <property name="poolMaximumActiveConnections" value="100"/> Connection을 모아놓은 메모리
+         <property name="poolTimeToWait" value="-1"/>
+        </dataSource>
+        
+      </environment>
+    </environments> -->
+    <mappers> 												 <!-- 쿼리 날려주는 애 -->
+      <mapper resource="sist/com/project/dao/erp-mapper.xml"/>
+      <mapper resource="sist/com/project/dao/reserve-mapper.xml"/>
+      <mapper resource="sist/com/project/dao/member-mapper.xml"/>
+      <mapper resource="sist/com/project/dao/member_mapper.xml"/>
+    </mappers>
+</configuration>
+
+
+
+
+
+

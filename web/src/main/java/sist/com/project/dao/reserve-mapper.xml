@@ -1,0 +1,240 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="sist.com.likeCar.reserveBean.reserve_carListBean">
+   
+      <resultMap type="likeCarlist" id="likeCarlist">
+      	<id column="CAR_NO" property="car_no"/>
+      	<!-- <result column="OPC_NO" property="opc_no"/> -->
+      	<result column="CAR_NAME" property="car_name"/>
+      	<result column="CAR_TYPE" property="car_type"/>
+      	<result column="CAR_SIZE" property="car_size"/>
+      	<result column="CAR_ENERGY" property="car_energy"/>
+      	<result column="CAR_FILENAME1" property="car_filename1"/>
+      	<result column="CAR_FILENAME2" property="car_filename2"/>
+      	<result column="CAR_FILENAME3" property="car_filename3"/>
+      	<result column="CAR_FILENAME4" property="car_filename4"/>
+      	<result column="CAR_FILENAME5" property="car_filename5"/>
+      <!-- 	<result column="PURCHASE_FROM" property="purchase_from"/>
+      	<result column="PURCHASE_COST" property="purchase_cost"/>
+		<result column="PURCHASE_DATE" property="purchase_date"/>
+		<result column="DEPREC_LIFE" property="deprec_life"/>
+		<result column="RESIDUAL_VALUE" property="residual_value"/>
+		<result column="DEPREC_METHOD" property="deprec_method"/>
+		<result column="FAIRVALUE_1YEAR" property="fairvalue_1year"/>
+		<result column="FAIRVALUE_2YEAR" property="fairvalue_2year"/>
+		<result column="FAIRVALUE_3YEAR" property="fairvalue_3year"/>
+		<result column="FAIRVALUE_4YEAR" property="fairvalue_4year"/> -->
+		<result column="BOARDABLE_COUNT" property="boardable_count"/>		
+	  </resultMap>
+	  
+	  <resultMap type="reserve" id="reserve">
+	  	<id column="RES_NO" property="res_no"/>
+	  <!-- 	<result column="MEM_NO" property="mem_no"/>
+	  	<result column="INS_NO" property="ins_no"/>
+	  	<result column="INSCOM_NO" property="inscom_no"/>
+	  	<result column="INV_NO" property="inv_no"/>
+	  	<result column="PAY_NO" property="pay_no"/>
+	  	<result column="VIO_NO" property="vip_no"/> -->
+	  	<result column="CAR_NO" property="car_no"/>
+	 <!--  	<result column="OPT_NO" property="opt_no"/>
+	  	<result column="EMP_NO" property="emp_no"/>
+	  	<result column="RES_TYPE" property="res_type"/> -->
+	  	<result column="START_DATE" property="start_date"/>
+	  	<result column="END_DATE" property="end_date"/>
+	<!--   	<result column="DEPOSIT" property="deposit"/>	 -->
+	  	<collection property="reserve_carListBean" resultMap="likeCarlist"></collection>
+	  </resultMap>
+	  
+	  <select id="selectLikeCarList" resultMap="reserve" parameterType="HashMap">
+  		
+	    	select * from(
+	    	select
+	    	rownum rm,
+	    	s.res_no,
+	    	s.start_date,
+	    	s.end_date,
+	    	l.car_no,
+	    	l.car_name,
+	    	l.car_type,
+	    	l.car_energy,
+	    	l.car_size,
+
+	    	l.boardable_count
+	    	from LIKECAR_RESERVATION s join
+	    		 LIKECAR_CAR l on s.car_no=l.car_no)LIKECAR_RESERVATION
+	    		 where rm between #{start} and #{end}
+    	
+    	</select>
+
+    	<select id="getCarListRowCount" resultType="int">
+    	select count(*) from LIKECAR_CAR
+    	</select> 
+    	
+    	
+    	<select id="searchDataList"  resultMap="reserve" parameterType="HashMap" >
+    		<choose>
+    			<when test="car_end_date==null or car_start_date==null or car_end_date=='' or car_start_date==''">
+    				    select * from(
+    					select rownum rm,l.car_no,l.car_name,
+    					l.car_type,l.car_size,l.car_energy,l.boardable_count,s.start_date,s.end_date,s.res_no
+    					from LIKECAR_RESERVATION s join LIKECAR_CAR l
+    					on s.car_no=l.car_no
+    					where ${query} like  '%'||#{data}||'%')   
+    					where rm between #{start} and #{end}
+    			</when>
+    			<when test="query==null or data==null or query=='' or data==''">
+    					select * from(
+    					select rownum rm,l.car_no,l.car_name,
+   						 l.car_type,l.car_size,l.car_energy,l.boardable_count,s.start_date,s.end_date,s.res_no
+    					from LIKECAR_RESERVATION s join LIKECAR_CAR l
+    					on s.car_no=l.car_no
+    					<![CDATA[
+   						where end_date > to_date(#{car_end_date},'yyyy-mm-dd hh24:mi') and start_date < to_date(#{car_start_date},'yyyy-mm-dd hh24:mi')]]>  
+    					)where rm between #{start} and #{end}
+    			</when>
+    			<when test="query!=null and data!=null and car_start_date!=null and car_end_date!=null">
+    					 select * from(
+    					 select * from(
+   						 select /*+index desc(LIKECARRESERVE LIKECARRESERVE_RES_NO_PK*/ rownum rm,l.car_no,l.car_name,
+   						 l.car_type,l.car_size,l.car_energy,l.boardable_count,s.start_date,s.end_date,s.res_no 
+   						 from LIKECAR_RESERVATION s join LIKECAR_CAR l
+   						 on s.car_no=l.car_no
+   						 <![CDATA[
+   			             where end_date > to_date(#{car_end_date},'yyyy-mm-dd hh24:mi') and start_date < to_date(#{car_start_date},'yyyy-mm-dd hh24:mi') ]]>   
+   						 )where rm between #{start} and #{end}) 
+  						 where ${query} like  '%'||#{data}||'%'
+    			</when>
+    		</choose>
+    	
+    	</select>
+    	
+    	<select id="infoListData" parameterType="int" resultMap="reserve">
+    	select * from(
+    	select
+    	s.start_date,
+    	s.end_date,
+    	s.res_no,
+    	l.car_no,
+    	l.car_name,
+    	l.car_type,
+    	l.car_energy,
+    	l.car_size,
+    	l.boardable_count
+    	from LIKECAR_RESERVATION s join
+    		 LIKECAR_CAR l on s.car_no=l.car_no)LIKECAR_RESERVATION
+             where car_no=#{no}
+    	
+    	</select>
+    	
+    	
+ 		<insert id="insertDataResult" parameterType="result" >
+    	insert into likecarresult (res_no,car_no,car_name,car_size,boardable_count,car_type,
+		car_energy,car_start_date,car_end_date,total_price,option_value,premium_price,state,reserve_name) values(
+		likecarresult_seq.nextval,#{car_no},#{car_name},#{car_size},#{boardable_count},#{car_type},#{car_energy},#{car_start_date},
+		#{car_end_date},#{total_price},#{option_value},#{premium_price},'입금확인중',#{reserve_name})
+    	</insert>
+    	
+
+		<select id="reserveCompleteList" resultType="result" parameterType="HashMap">
+		select 
+		res_no,car_no,car_name,car_size,boardable_count,car_type,
+		car_energy,car_start_date,car_end_date,total_price,option_value,premium_price,state,reserve_name
+		from likecarresult
+		where reserve_name=#{name}
+		</select>
+    
+    	<select id="reserveCompleteListAll" resultType="result">
+    	select 
+		res_no,car_no,car_name,car_size,boardable_count,car_type,
+		car_energy,car_start_date,car_end_date,total_price,option_value,premium_price,state,reserve_name
+		from likecarresult
+    	</select>
+    
+		<update id="updateComplete" parameterType="int">
+		update likecarresult set state = '결제승인'
+		where res_no=#{no}
+		</update>
+		
+		<delete id="deleteComplete" parameterType="int">
+		delete from likecarresult
+		where res_no=#{no}
+		</delete>
+		
+		<select id="selectLikeCarListTest" resultMap="reserve">
+			select * from(
+		    	select
+		    	s.res_no,
+		    	s.start_date,
+		    	s.end_date,	    
+		    	l.car_no,
+		    	l.car_name,
+		    	l.car_type,
+		    	l.car_energy,
+		    	l.car_size,
+		    	l.boardable_count
+		    	from LIKECAR_RESERVATION s join
+		    		 LIKECAR_CAR l on s.car_no=l.car_no)LIKECAR_RESERVATION
+		    		
+		</select>
+		<select id="priceAll" parameterType="int" resultType="int">
+		select total_price from likecarresult
+		where res_no=#{no}
+		</select>
+		
+		<select id="pointSelect" parameterType="String" resultType="int">
+		select point from LIKECAR_MEMBER 
+		where mem_name = #{reserve_name}
+		</select>
+		
+		<select id="getReserve_Name" parameterType="int" resultType="String">
+		select reserve_name from likecarresult
+		where res_no = #{no}
+		</select>
+		
+		
+		 <update id="updatePoint" parameterType="HashMap">
+		update LIKECAR_MEMBER set point = #{afterPoint}
+		where mem_name = #{reserve_name}
+		</update> 
+		
+		<insert id="insertAccountAssets" parameterType="int">
+		INSERT INTO 
+		LIKECAR_ACCOUNT(ACC_NO,ACC_TYPE,ACC_NAME,ACC_VALUE,ACC_DATE,DEPREC_LIFE,RATE)
+		VALUES(LIKECAR_ACCOUNT_SEQ.NEXTVAL,'자산','매출채권',#{price},SYSDATE,NULL,NULL)
+		</insert>
+		
+		<insert id="insertAccountFan" parameterType="int">
+		INSERT INTO 
+		LIKECAR_ACCOUNT(ACC_NO,ACC_TYPE,ACC_NAME,ACC_VALUE,ACC_DATE,DEPREC_LIFE,RATE)
+		VALUES(LIKECAR_ACCOUNT_SEQ.NEXTVAL,'부채','예수금',#{price},SYSDATE,NULL,NULL)
+		</insert>
+		
+		<insert id="AccountMinusPaymentAssets" parameterType="int">
+		INSERT INTO 
+		LIKECAR_ACCOUNT(ACC_NO,ACC_TYPE,ACC_NAME,ACC_VALUE,ACC_DATE,DEPREC_LIFE,RATE)
+		VALUES(LIKECAR_ACCOUNT_SEQ.NEXTVAL,'자산','매출채권',#{MinusPrice},SYSDATE,NULL,NULL)
+		</insert>
+    	
+    	<insert id="AccountMinusFanAssets" parameterType="int">
+    	INSERT INTO 
+		LIKECAR_ACCOUNT(ACC_NO,ACC_TYPE,ACC_NAME,ACC_VALUE,ACC_DATE,DEPREC_LIFE,RATE)
+		VALUES(LIKECAR_ACCOUNT_SEQ.NEXTVAL,'부채','예수금',#{MinusPrice},SYSDATE,NULL,NULL)
+    	</insert>
+    	
+    	<insert id="AccountPlusPaymentAssets" parameterType="int">
+    	INSERT INTO 
+		LIKECAR_ACCOUNT(ACC_NO,ACC_TYPE,ACC_NAME,ACC_VALUE,ACC_DATE,DEPREC_LIFE,RATE)
+		VALUES(LIKECAR_ACCOUNT_SEQ.NEXTVAL,'수익','매출수익',#{price},SYSDATE,NULL,NULL)
+    	</insert>
+    	
+    	<insert id="AccountPlusPaymentRevenue" parameterType="int">
+    	INSERT INTO 
+		LIKECAR_ACCOUNT(ACC_NO,ACC_TYPE,ACC_NAME,ACC_VALUE,ACC_DATE,DEPREC_LIFE,RATE)
+		VALUES(LIKECAR_ACCOUNT_SEQ.NEXTVAL,'자산','현금',#{price},SYSDATE,NULL,NULL)
+    	</insert>
+</mapper>
+
+
+

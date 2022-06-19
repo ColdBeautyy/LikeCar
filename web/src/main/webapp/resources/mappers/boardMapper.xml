@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+  PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+  "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="boardMapper">
+  
+  <!-- 게시판 글 작성 -->
+  <insert id="write" parameterType="sist.com.bean.BoardBean">  <!--  parameterType=""에는 parameter의 주소값(경로)을 써줘야됨. -->
+	INSERT INTO CM_BOARD(BNO, TITLE, CONTENT, WRITER)
+    VALUES( CM_BOARD_SEQ.NEXTVAL, #{title},#{content}, #{writer} )
+  </insert>
+  
+</mapper>

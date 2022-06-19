@@ -1,0 +1,51 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="sist.com.bean.empSample">
+	
+<select id="selectEmpData" resultType="sist.com.bean.EmpBean">
+	SELECT EMPNO,ENAME,SAL,NVL(COMM,0)COMM,JOB,MGR,TO_CHAR(HIREDATE,'YY/MM/DD')HIREDATE,DEPTNO
+	FROM EMP
+</select>
+	
+<select id="selectStudentData" resultType="sist.com.bean.StudentBean">
+	SELECT STUDNO,NAME,USERID,GRADE,IDNUM,TO_CHAR(BIRTHDATE,'YY/MM/DD')BIRTHDATE,TEL,HEIGHT,WEIGHT,DEPTNO,PROFNO
+	FROM STUDENT
+</select>
+	
+<select id="selectProfessorData" resultType="sist.com.bean.ProfessorBean">
+	SELECT PROFNO,NAME,USERID,POSITION,SAL,NVL(COMM,0)COMM,TO_CHAR(HIREDATE,'YY/MM/DD')HIREDATE,DEPTNO
+	FROM PROFESSOR
+</select>
+
+<select id="searchEmpData" parameterType="java.util.HashMap" resultType="sist.com.bean.EmpBean">
+	SELECT EMPNO,ENAME,SAL,NVL(COMM,0)COMM,JOB,MGR,TO_CHAR(HIREDATE,'YY/MM/DD')HIREDATE,DEPTNO
+	FROM EMP
+	<where>
+		<if test="option!=null and keyword!=null">${option} LIKE '%'||#{keyword}||'%'</if>
+	</where>
+</select>
+
+<select id="searchStudentData" parameterType="java.util.HashMap" resultType="sist.com.bean.StudentBean">
+	SELECT STUDNO,NAME,USERID,GRADE,IDNUM,TO_CHAR(BIRTHDATE,'YY/MM/DD')BIRTHDATE,TEL,HEIGHT,WEIGHT,DEPTNO,PROFNO
+	FROM STUDENT
+	<where>
+		<if test="option!=null and keyword!=null">${option} LIKE '%'||#{keyword}||'%'</if>
+	</where>
+</select>
+
+<select id="searchProfessorData" parameterType="java.util.HashMap" resultType="sist.com.bean.ProfessorBean">
+	SELECT PROFNO,NAME,USERID,POSITION,SAL,NVL(COMM,0)COMM,TO_CHAR(HIREDATE,'YY/MM/DD')HIREDATE,DEPTNO
+	FROM PROFESSOR
+	<where>
+		<if test="option!=null and keyword!=null">${option} LIKE '%'||#{keyword}||'%'</if>
+	</where>
+</select>
+
+</mapper>
+
+
+
+
+
